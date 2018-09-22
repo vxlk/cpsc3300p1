@@ -1,0 +1,9 @@
+﻿  mips.cpp
+c:\users\tyler\documents\visual studio 2015\projects\3300p1\3300p1\mips.cpp(8): warning C4005: '_CRT_SECURE_NO_WARNINGS': macro redefinition
+  c:\users\tyler\documents\visual studio 2015\projects\3300p1\3300p1\mips.cpp(8): note: command-line arguments:  see previous definition of '_CRT_SECURE_NO_WARNINGS'
+c:\users\tyler\documents\visual studio 2015\projects\3300p1\3300p1\mips.cpp(248): warning C4018: '<': signed/unsigned mismatch
+c:\users\tyler\documents\visual studio 2015\projects\3300p1\3300p1\mips.cpp(258): warning C4018: '<': signed/unsigned mismatch
+c:\users\tyler\documents\visual studio 2015\projects\3300p1\3300p1\mips.cpp(264): warning C4018: '<': signed/unsigned mismatch
+c:\users\tyler\documents\visual studio 2015\projects\3300p1\3300p1\mips.cpp(235): warning C4101: 'sz': unreferenced local variable
+  3300p1.vcxproj -> C:\Users\Tyler\documents\visual studio 2015\Projects\3300p1\Debug\3300p1.exe
+  3300p1.vcxproj -> C:\Users\Tyler\documents\visual studio 2015\Projects\3300p1\Debug\3300p1.pdb (Partial PDB)

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <iomanip>
+#include <type_traits>
 
 //https://en.wikibooks.org/wiki/MIPS_Assembly/Instruction_Formats
 
@@ -32,41 +33,185 @@ struct xferControl {
 	int untakenBranches;
 };
 
+std::vector<int> instructionList;
+int branch = 0;
+bool halt = false;
+int usedWordNumber = 0;
 int wordNumber = 0;
 int rNumber = 0;
-unsigned int word[NUM_REGISTERS];
-unsigned int r[NUM_REGISTERS];
+int word[NUM_REGISTERS];
+int r[NUM_REGISTERS];
 int pc = 0;
 ICstats ic;
 memAccess mem;
 xferControl xfer;
 
+//i
 void addiu(const unsigned int passedValue) {
 	ic.ops++;
+	int maskimm = 65535;
+	int imm = passedValue & maskimm;
+	int maskr = 31;
+	int rs = passedValue >> 21;
+	rs = rs & maskr;
+	int rt = passedValue >> 16;
+	rt = rt & maskr;
+	
+
+	r[rt] = r[rs] + imm;
+
+	std::cout << std::setfill('0') << std::setw(3) << pc << ": ";
+	std::cout << std::setfill('0')
+		<< std::dec
+		<< std::showbase
+		<< std::internal;
+	std::cout << "addiu	- register r[" << rt << "] now contains " << std::hex << std::setfill('0') << std::setw(8) << r[rt] << "\n";
+	pc++;
 }
 
 void sw(const unsigned int passedValue) {
 	mem.stores++;
+	ic.loads++;
+	
+	int maskimm = 65535;
+	int imm = passedValue & maskimm;
+	int maskr = 31;
+	int rs = passedValue >> 21;
+	rs = rs & maskr;
+	int rt = passedValue >> 16;
+	rt = rt & maskr;
+
+	int test = r[rs] + imm;
+	instructionList[/*r[rs] +*/ imm] = r[rt];
+
+	std::cout << std::setfill('0') << std::setw(3) << pc << ": ";
+	std::cout << std::setfill('0')
+		<< std::dec
+		<< std::showbase
+		<< std::internal;
+	std::cout << "sw	- register r[" << rt << "] value stored in memory\n";
+	pc++;
 }
 
 void beq(const unsigned int passedValue) {
 	//test if taken
+	int maskimm = 65535;
+	int16_t imm = passedValue & maskimm;
+	int maskr = 31;
+	int rs = passedValue >> 21;
+	rs = rs & maskr;
+	int rt = passedValue >> 16;
+	rt = rt & maskr;
+
+
+	std::cout << std::setfill('0') << std::setw(3) << pc << ": ";
+	std::cout << std::setfill('0')
+		<< std::dec
+		<< std::showbase
+		<< std::internal;
+	std::cout << "beq	- ";
+
+	if (r[rs] == r[rt]) {
+		pc += imm;
+		xfer.takenBranches++;
+		std::cout << std::setw(8) << "branch taken to " << std::setfill('0') << std::setw(8) << imm << "\n";
+	}
+	else {
+		xfer.untakenBranches++;
+		std::cout << std::setw(8) << "branch untaken\n";
+	}
 }
 
 void bgtz(const unsigned int passedValue) {
+	int maskimm = 65535;
+	int16_t imm = passedValue & maskimm;
+	int maskr = 31;
+	int rs = passedValue >> 21;
+	rs = rs & maskr;
+	int rt = passedValue >> 16;
+	rt = rt & maskr;
 
+	std::cout << std::setfill('0') << std::setw(3) << pc << ": ";
+	std::cout << std::setfill('0')
+		<< std::dec
+		<< std::showbase
+		<< std::internal;
+	pc++;
+	ic.jumps++;
+	std::cout << "blgtz	- ";
+	if (r[rs] > 0) {
+		pc += imm;
+		branch = pc - 1;
+		xfer.takenBranches++;
+		std::cout << std::setw(8) << "branch taken to " << std::setfill('0') << std::setw(8) << pc << "\n";
+	}
+	else {
+		xfer.untakenBranches++;
+		std::cout << std::setw(8) << "branch untaken\n";
+	}
 }
-
+//i
 void blez(const unsigned int passedValue) {
-
+	//test if taken
+	int maskimm = 65535;
+	int16_t imm = passedValue & maskimm;
+	int maskr = 31;
+	int rs = passedValue >> 21;
+	rs = rs & maskr;
+	int rt = passedValue >> 16;
+	rt = rt & maskr;
+	
+	std::cout << std::setfill('0') << std::setw(3) << pc << ": ";
+	std::cout << std::setfill('0')
+		<< std::dec
+		<< std::showbase
+		<< std::internal;
+	pc++;
+	ic.jumps++;
+	std::cout << "blez	- ";
+	if (r[rs] <= 0) {
+		pc += imm;
+		branch = pc - 1;
+		xfer.takenBranches++;
+		std::cout << std::setw(8) << "branch taken to " << std::setfill('0') << std::setw(8) << pc << "\n";
+	}
+	else {
+		xfer.untakenBranches++;
+		std::cout << std::setw(8) << "branch untaken\n";
+	}
 }
 
 void bne(const unsigned int passedValue) {
+	int maskimm = 65535;
+	int16_t imm = passedValue & maskimm;
+	int maskr = 31;
+	int rs = passedValue >> 21;
+	rs = rs & maskr;
+	int rt = passedValue >> 16;
+	rt = rt & maskr;
 
+
+	std::cout << std::setfill('0') << std::setw(3) << pc << ": ";
+	std::cout << std::setfill('0')
+		<< std::dec
+		<< std::showbase
+		<< std::internal;
+	std::cout << "beq	- ";
+
+	if (r[rs] != r[rt]) {
+		pc += imm;
+		xfer.takenBranches++;
+		std::cout << std::setw(8) << "branch taken to " << std::setfill('0') << std::setw(8) << imm << "\n";
+	}
+	else {
+		xfer.untakenBranches++;
+		std::cout << std::setw(8) << "branch untaken\n";
+	}
 }
-
+//j
 void j(const unsigned int passedValue) {
 	xfer.jumps++;
+	ic.jumps++;
 	int jumpVal = passedValue;
 	//get rid of opcode
 	jumpVal = jumpVal << 6;
@@ -74,16 +219,19 @@ void j(const unsigned int passedValue) {
 
 	std::cout << std::setfill('0') << std::setw(3) << pc << ": ";
 	std::cout << std::setfill('0')
-			  << std::hex
+			  << std::dec
 			  << std::showbase
 			  << std::internal;
 
-	std::cout << std::setw(8) << "j	- jump to " << jumpVal << "\n";
-	pc++;
+	std::cout << std::setw(8) << "j	- jump to " << std::setfill('0') << std::setw(8) << jumpVal << "\n";
+	pc+=jumpVal;
+	branch = jumpVal-1;
 }
 
 void jal(const unsigned int passedValue) {
 	xfer.jumpsLinks++;
+	xfer.jumps++;
+	ic.jumps++;
 }
 
 void lui(const unsigned int passedValue) {
@@ -91,12 +239,25 @@ void lui(const unsigned int passedValue) {
 }
 
 void lw(const unsigned int passedValue) {
-	ic.ops++;
-	r[rNumber] = word[wordNumber];
-	rNumber++;
-	wordNumber++;
+	ic.loads++;
+	mem.loads++;
+	int maskimm = 65535;
+	int16_t imm = passedValue & maskimm;
+	int maskr = 31;
+	int rs = passedValue >> 21;
+	rs = rs & maskr;
+	int rt = passedValue >> 16;
+	rt = rt & maskr;
+
+	r[rt] = instructionList[r[rs] + imm];
+
 	std::cout << std::setfill('0') << std::setw(3) << pc << ": ";
-	std::cout << "lw	- register r[" << rNumber << "] now contains " << std::hex << r[rNumber - 1] << "\n";
+	std::cout << std::setfill('0')
+		<< std::dec
+		<< std::showbase
+		<< std::internal;
+
+	std::cout << "lw	- register r[" << rt << "] now contains " << std::hex << std::setfill('0') << std::setw(8) << r[rt] << "\n";
 	pc++;
 }
 
@@ -114,43 +275,79 @@ void xori(const unsigned int passedValue) {
 
 /* ALU FUNCTIONS */
 void addu(const unsigned int passedValue) {
-	ic.ops++;
+	
+	int maskr = 31;
+	int rs = passedValue >> 21;
+	rs = rs & maskr;
+	int rt = passedValue >> 16;
+	rt = rt & maskr;
+	int rd = passedValue >> 11;
+	rd = rd & maskr;
+
+	r[rd] = r[rs] + r[rt];
+
+	std::cout << std::setfill('0') << std::setw(3) << pc << ": ";
+	std::cout << std::setfill('0')
+		<< std::dec
+		<< std::showbase
+		<< std::internal;
+	std::cout << "addu	- register r[" << rd << "] now contains " << std::hex << std::setfill('0') << std::setw(8) << r[rd] << "\n";
+	pc++;
+
 }
 
 void and(const unsigned int passedValue) {
-	ic.ops++;
+	
 }
 
 void jalr(const unsigned int passedValue) {
-	xfer.jumpsLinks;
+	
 }
 
 void jr(const unsigned int passedValue) {
-	xfer.jumps++;
+	
 }
 
 void nor(const unsigned int passedValue) {
-	ic.ops++;
+	
 }
 
 void or(const unsigned int passedValue) {
-	ic.ops++;
+	
 }
 
 void sll(const unsigned int passedValue) {
-	ic.ops++;
+	
 }
 
 void sra(const unsigned int passedValue) {
-	ic.ops++;
+
 }
 
 void srl(const unsigned int passedValue) {
-	ic.ops++;
+	
 }
 
+//r
 void subu(const unsigned int passedValue) {
-	ic.ops++;
+
+	int maskr = 31;
+	int rs = passedValue >> 21;
+	rs = rs & maskr;
+	int rt = passedValue >> 16;
+	rt = rt & maskr;
+	int rd = passedValue >> 11;
+	rd = rd & maskr;
+
+	r[rd] = r[rs] - r[rt];
+
+	std::cout << std::setfill('0') << std::setw(3) << pc << ": ";
+	std::cout << std::setfill('0')
+		<< std::dec
+		<< std::showbase
+		<< std::internal;
+	std::cout << "subu	- register r[" << rd << "] now contains " << std::hex << std::setfill('0') << std::setw(8) << r[rd] << "\n";
+	pc++;
 }
 
 void xor(const unsigned int passedValue) {
@@ -169,7 +366,7 @@ void ALUfunction(const unsigned int passedValue) {
 		wordNumber++;
 		return;
 	}
-
+	ic.ops++;
 	unsigned int mask = 63;
 	unsigned int funct = passedValue & mask;
 
@@ -190,17 +387,24 @@ void ALUfunction(const unsigned int passedValue) {
 
 }
 
+void hlt() {
+	std::cout << std::setfill('0') << std::setw(3) << pc << ": hlt\n";
+}
+
 void functionCall(const unsigned int passedValue) {
 	//figure out what kind of function it is
 	//get the function opcode
 	//send the int to the function's function
-	if (passedValue == 0) return;
+	if (passedValue == 0) {
+		hlt();
+		return;
+	}
 	unsigned int mask = 63;
 	mask = mask << 26;
 
 	unsigned int opcode = passedValue & mask;
 	opcode = opcode >> 26;
-
+	mem.fetches++;
 	switch(opcode) {
 	case 0: ALUfunction(passedValue); break;
 	case 0x09: addiu(passedValue); break;
@@ -223,7 +427,6 @@ void functionCall(const unsigned int passedValue) {
 int main(void) {
 
 	std::string inputCommand;
-	std::vector<unsigned int> instructionList;
 	int i = 0;
 
 #ifdef _MSC_VER
@@ -257,8 +460,15 @@ int main(void) {
 	std::cout << "behavioral simulation of simple MIPS-like machine\n";
 	std::cout << "(all values are shown in hexadecimal)\n";
 	std::cout << "pc   result of instruction at that location\n";
-	for (int i = 0; i < instructionList.size(); ++i)
+	for (int i = 0; i < instructionList.size(); ++i) {
 		functionCall(instructionList[i]);
+		if (halt) return 0;
+		if (branch) {
+			i = branch;
+			branch = 0;
+		}
+		
+	}
 
 	//after
 	std::cout << "contents of memory\n";
@@ -271,7 +481,7 @@ int main(void) {
 
 
 	/* Report Results */
-	std::cout << "instruction class counts(omits hlt instruction)\n";
+	std::cout << std::dec << "instruction class counts(omits hlt instruction)\n";
 		std::cout << "ops " << ic.ops << "\n";
 		std::cout << "loads / stores " << ic.loads << "\n";
 		std::cout << "jumps/ branches " << ic.jumps << "\n";
